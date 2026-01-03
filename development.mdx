@@ -1,94 +1,174 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: 'Developer Tools'
+description: 'Build and test integrations with the ShopLocal platform'
 ---
 
 <Info>
   **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
+  - Node.js version 19 or higher (for local documentation development)
+  - ShopLocal API credentials
+  - Basic understanding of REST APIs
 </Info>
 
-Follow these steps to install and run Mintlify on your operating system.
+Follow these steps to set up your development environment for ShopLocal integrations.
 
 <Steps>
-<Step title="Install the Mintlify CLI">
+<Step title="Get your API credentials">
 
-```bash
-npm i -g mint
-```
+Log in to your ShopLocal business dashboard and navigate to Settings > Developer > API Keys to generate your API credentials.
+
+You'll receive:
+- API Key
+- API Secret
+- Webhook signing key (for webhook integrations)
+
 </Step>
 
-<Step title="Preview locally">
+<Step title="Set up your development environment">
 
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
+Install the ShopLocal SDK for your preferred language:
 
-```bash
-mint dev
+```bash npm
+npm install @shoplocal/sdk
 ```
 
-A local preview of your documentation will be available at `http://localhost:3000`.
+```bash python
+pip install shoplocal-sdk
+```
+
+```bash ruby
+gem install shoplocal-sdk
+```
+
+</Step>
+
+<Step title="Test your integration">
+
+Use our sandbox environment to test your integration before going live:
+
+```javascript
+import ShopLocal from '@shoplocal/sdk';
+
+const client = new ShopLocal({
+  apiKey: 'your_sandbox_api_key',
+  environment: 'sandbox'
+});
+
+// Test API connection
+const business = await client.businesses.get('your_business_id');
+console.log(business);
+```
 
 </Step>
 </Steps>
 
-## Custom ports
+## API environments
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+ShopLocal provides two environments for development:
 
-```bash
-mint dev --port 3333
+### Sandbox environment
+Perfect for testing and development. Use sandbox API keys to:
+- Test business creation and updates
+- Simulate customer interactions
+- Test webhook deliveries
+- No real data or charges
+
+```javascript
+const client = new ShopLocal({
+  apiKey: process.env.SHOPLOCAL_SANDBOX_KEY,
+  environment: 'sandbox'
+});
 ```
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
+### Production environment
+For live integrations with real customer data:
 
-```md
-Port 3000 is already in use. Trying 3001 instead.
+```javascript
+const client = new ShopLocal({
+  apiKey: process.env.SHOPLOCAL_API_KEY,
+  environment: 'production'
+});
 ```
 
-## Mintlify versions
+<Warning>
+Always use environment variables for API keys. Never commit keys to version control.
+</Warning>
 
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
+## Rate limits
 
-```bash
-npm mint update
+The ShopLocal API implements rate limiting to ensure service quality:
+
+- **Sandbox**: 100 requests per minute
+- **Production**: 1,000 requests per minute per API key
+- **Burst**: Up to 50 requests per second
+
+Monitor rate limit headers in API responses:
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1640000000
 ```
 
-## Validating links
+## Webhooks
 
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
+Set up webhooks to receive real-time notifications about events:
 
-```bash
-mint broken-links
+```javascript
+// Configure webhook endpoint
+app.post('/webhooks/shoplocal', (req, res) => {
+  const signature = req.headers['x-shoplocal-signature'];
+  const payload = req.body;
+  
+  // Verify webhook signature
+  if (!ShopLocal.webhooks.verify(payload, signature)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  // Handle event
+  switch (payload.event) {
+    case 'business.updated':
+      // Handle business update
+      break;
+    case 'review.created':
+      // Handle new review
+      break;
+  }
+  
+  res.status(200).send('OK');
+});
 ```
 
-## Deployment
-
-If the deployment is successful, you should see the following:
-
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
-
-## Code formatting
-
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
-
-## Troubleshooting
+## Best practices
 
 <AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
-
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
+  <Accordion title="Handle errors gracefully">
+    Always implement proper error handling:
+    ```javascript
+    try {
+      const business = await client.businesses.get(id);
+    } catch (error) {
+      if (error.status === 404) {
+        // Business not found
+      } else if (error.status === 429) {
+        // Rate limit exceeded
+      }
+    }
+    ```
   </Accordion>
 
-  <Accordion title="Issue: Encountering an unknown error">
+  <Accordion title="Cache responses when appropriate">
+    Reduce API calls by caching data that doesn't change frequently:
+    - Business hours
+    - Location information
+    - Category data
+  </Accordion>
   
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
+  <Accordion title="Use webhook events">
+    Instead of polling the API, use webhooks to get real-time updates about:
+    - New reviews
+    - Business information changes
+    - Customer inquiries
   </Accordion>
 </AccordionGroup>
 
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+Need more help? Check out our [API reference](/api-reference/introduction) or contact our [developer support](mailto:developers@shoplocal.online).
