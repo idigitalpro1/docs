@@ -1,33 +1,38 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Overview'
+description: 'Integrate ShopLocal into your applications with our RESTful API'
 ---
 
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+  Get started with the ShopLocal API to manage business listings, customer interactions, and more programmatically.
 </Note>
 
-## Welcome
+## Welcome to the ShopLocal API
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+The ShopLocal API is organized around REST principles. It uses standard HTTP response codes, authentication, and verbs. Our API accepts JSON-encoded request bodies and returns JSON-encoded responses.
 
 <Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
+  title="API Endpoints Reference"
+  icon="code"
+  href="/api-reference/endpoint/get"
 >
-  View the OpenAPI specification file
+  Browse all available endpoints
 </Card>
+
+## Base URLs
+
+Use the appropriate base URL depending on your environment:
+
+- **Sandbox**: `https://sandbox-api.shoplocal.online/v1`
+- **Production**: `https://api.shoplocal.online/v1`
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API requests require authentication using Bearer tokens. Include your API key in the Authorization header:
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```bash
+curl https://api.shoplocal.online/v1/businesses \
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
+
+Get your API keys from your [business dashboard](https://shoplocal.online/dashboard/settings/api).
